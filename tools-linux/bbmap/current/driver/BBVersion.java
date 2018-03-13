@@ -1,0 +1,11 @@
+package driver;
+
+import shared.Shared;
+
+public class BBVersion {
+	
+	public static void main(String[] args){
+		System.out.println(Shared.BBMAP_VERSION_STRING);
+	}
+	
+}
