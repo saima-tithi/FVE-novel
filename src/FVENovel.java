@@ -14,7 +14,16 @@ public class FVENovel {
 	private static boolean reportCoverage = false;
 	
 	private static void printUsage() {
-		System.out.println("No argument");
+	    System.out.println("Usage:");
+        System.out.println(
+                "java -cp bin FVENovel -1 $read1File -2 $read2File -fveres $FastViromeExplorerResDirectory "
+                + "-dbType gov -dbDir /path-to-referencedb-folder -o $outputDirectory");
+        System.out.println("-1: input .fastq file for read sequences (paired-end 1), mandatory field.");
+        System.out.println("-2: input .fastq file for read sequences (paired-end 2).");
+        System.out.println("-fveres: full path of directory containing results from FastviromeExplorer.");
+        System.out.println("-dbType: specify the database name (\"gov\" or \"imgvr\")");
+        System.out.println("-dbDir: full path of directory containing all database files.");
+        System.out.println("-o: full path of output directory.");
 	}
 	
 	private static void parseArguments(String[] args) {

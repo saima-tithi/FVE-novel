@@ -54,25 +54,25 @@ fastq-dump --skip-technical  --readids --read-filter pass --dumpbase --split-fil
 Two paired-end read files, SRR5677466_pass_1.fastq and SRR5677466_pass_2.fastq will be downloaded.
 Run FastViromeExplorer using the following commands:
 ```bash
-mkdir FVE-outputDirectory
+mkdir /path-to-results/FVE-outputDirectory
 cd FVE-project-directory
 javac -d bin src/*.java
-java -cp bin FastViromeExplorer -1 $read1File -2 $read2File -i /path-to-referencedb-folder/GOV-viral-populations/GOV_viral_populations.idx -l /path-to-referencedb-folder/GOV-viral-populations/gov_viral_populations-length.txt -o FVE-outputDirectory
+java -cp bin FastViromeExplorer -1 $read1File -2 $read2File -i /path-to-referencedb-folder/GOV-viral-populations/GOV_viral_populations.idx -l /path-to-referencedb-folder/GOV-viral-populations/gov_viral_populations-length.txt -o /path-to-results/FVE-outputDirectory
 ```
 
 Then run FastViromeExplorer-novel using the following commands:
 ```bash
-mkdir FVE-novel-outputDirectory
+mkdir /path-to-results/FVE-novel-outputDirectory
 cd FVE-novel-project-directory
 javac -d bin src/*.java
-java -cp bin FVENovel -1 $read1File -2 $read2File -o FVENovel-outputDirectory -fveres /path-to-FVE-res/FVE-outputDirectory -dbType gov -dbDir /path-to-referencedb-folder/GOV-viral-populations
+java -cp bin FVENovel -1 $read1File -2 $read2File -o /path-to-results/FVE-novel-outputDirectory -fveres /path-to-FVE-res/FVE-outputDirectory -dbType gov -dbDir /path-to-referencedb-folder/GOV-viral-populations
 ```
 To quickly run and test FastViromeExplorer-novel set the -topBins paprameter to 1. Then instead of running for top 100 bins, it will run for top 1 bin.
 ```bash
-mkdir FVE-novel-outputDirectory
+mkdir /path-to-results/FVE-novel-outputDirectory
 cd FVE-novel-project-directory
 javac -d bin src/*.java
-java -cp bin FVENovel -1 $read1File -2 $read2File -o FVENovel-outputDirectory -fveres /path-to-FVE-res/FVE-outputDirectory -dbType gov -dbDir /path-to-referencedb-folder/GOV-viral-populations -topBins 1
+java -cp bin FVENovel -1 $read1File -2 $read2File -o /path-to-results/FVE-novel-outputDirectory -fveres /path-to-results/FVE-outputDirectory -dbType gov -dbDir /path-to-referencedb-folder/GOV-viral-populations -topBins 1
 ```
 
 # Output
