@@ -21,28 +21,20 @@ git clone https://github.com/saima-tithi/FVE-novel.git
 ```
 From now on, we will refer the FastViromeExplorer-novel directory in the user's local machine as `project directory`. The `project directory` will contain 3 folders: src, bin, and tools-linux.
 
-Install bbmap:
-```bash 
+For installing the tool dependencies, add the following lines in the .bashrc. Please make sure to change the "path-to-project-directory" into the correct path of FastViromeExplorer-novel project directory.
+
+```bash
+#Install bbmap
 export PATH=$PATH:/path-to-project-directory/tools-linux/bbmap
-```
-Install Spades:
-```bash
+#Install Spades
 export PATH=$PATH:/path-to-project-directory/tools-linux/SPAdes-3.10.1-Linux/bin
-```
-Install Salmon:
-```bash
+#Install Salmon
 export PATH=$PATH:/path-to-project-directory/tools-linux/Salmon-latest_linux_x86_64/bin
-```
-Install CD-HIT:
-```bash
+#Install CD-HIT
 export PATH=$PATH:/path-to-project-directory/tools-linux/cd-hit-v4.6.8-2017-0621
-```
-Install Bedtools:
-```bash
+#Install Bedtools
 export PATH=$PATH:/path-to-project-directory/tools-linux/bedtools2/bin
-```
-Install Mummer:
-```bash
+#Install Mummer
 export PATH=$PATH:/path-to-project-directory/tools-linux/MUMmer3.23
 ```
 
