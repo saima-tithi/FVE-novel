@@ -51,6 +51,11 @@ public class GrowScaffolds {
 			dbFaiFile = "gov_viral_populations.fasta.fai";
 			dbClusterFile = "gov_viral_populations_clusters.txt";
 		} 
+		else if (dbType.equals("gov_epi_mes")) {
+            dbFastaFile = "GOV_viral_contigs_EPI_MES.fna";
+            dbFaiFile = "GOV_viral_contigs_EPI_MES.fna.fai";
+            dbClusterFile = "GOV_viral_contigs_EPI_MES_clusters.txt";
+        }
 		else if (dbType.equals("imgvr")) {
 			dbFastaFile = "mVCs_PaezEspino_Nature.fna";
 			dbFaiFile = "mVCs_PaezEspino_Nature.fna.fai";

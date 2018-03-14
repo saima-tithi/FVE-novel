@@ -21,7 +21,7 @@ public class FVENovel {
         System.out.println("-1: input .fastq file for read sequences (paired-end 1), mandatory field.");
         System.out.println("-2: input .fastq file for read sequences (paired-end 2).");
         System.out.println("-fveres: full path of directory containing results from FastviromeExplorer.");
-        System.out.println("-dbType: specify the database name (\"gov\" or \"imgvr\")");
+        System.out.println("-dbType: specify the database name (\"gov\", \"gov_epi_mes\", or \"imgvr\")");
         System.out.println("-dbDir: full path of directory containing all database files.");
         System.out.println("-o: full path of output directory.");
 	}
