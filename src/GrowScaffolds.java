@@ -392,20 +392,37 @@ public class GrowScaffolds {
 				String cmd = "";
 				try 
 				{
-					cmd = "cd " + outputDirName + "\n"
-							+ "cd bin-" + binNum + "\n"
-							+ "bash filterbyname.sh "
-							+ "in1=" + read1 + " "
-							+ "in2=" + read2 + " "
-							+ "out1=reads_1.fastq out2=reads_2.fastq names=readIds.txt "
-							+ "include=t\n"
-							+ "spades.py --meta "
-							+ "-o metaSpades-res -1 reads_1.fastq -2 reads_2.fastq --only-assembler\n"
-							+ "cd metaSpades-res\n"
-							+ "samtools faidx scaffolds.fasta\n"
-							+ "cd-hit-est -i scaffolds.fasta -o cd-hit-scaffolds.fasta "
-							+ "-c " + cdHitCuttOff + " -n 10 -d 0 -M 16000 -T 8\n"
-							+ "samtools faidx cd-hit-scaffolds.fasta\n";
+					if (read2.isEmpty()) {
+					    cmd = "cd " + outputDirName + "\n"
+                            + "cd bin-" + binNum + "\n"
+                            + "bash filterbyname.sh "
+                            + "in=" + read1 + " "
+                            + "out=reads_1.fastq names=readIds.txt "
+                            + "include=t\n"
+                            + "spades.py --meta "
+                            + "-o metaSpades-res --12 reads_1.fastq --only-assembler\n"
+                            + "cd metaSpades-res\n"
+                            + "samtools faidx scaffolds.fasta\n"
+                            + "cd-hit-est -i scaffolds.fasta -o cd-hit-scaffolds.fasta "
+                            + "-c " + cdHitCuttOff + " -n 10 -d 0 -M 16000 -T 8\n"
+                            + "samtools faidx cd-hit-scaffolds.fasta\n";
+					}
+					else {
+        				    cmd = "cd " + outputDirName + "\n"
+        							+ "cd bin-" + binNum + "\n"
+        							+ "bash filterbyname.sh "
+        							+ "in1=" + read1 + " "
+        							+ "in2=" + read2 + " "
+        							+ "out1=reads_1.fastq out2=reads_2.fastq names=readIds.txt "
+        							+ "include=t\n"
+        							+ "spades.py --meta "
+        							+ "-o metaSpades-res -1 reads_1.fastq -2 reads_2.fastq --only-assembler\n"
+        							+ "cd metaSpades-res\n"
+        							+ "samtools faidx scaffolds.fasta\n"
+        							+ "cd-hit-est -i scaffolds.fasta -o cd-hit-scaffolds.fasta "
+        							+ "-c " + cdHitCuttOff + " -n 10 -d 0 -M 16000 -T 8\n"
+        							+ "samtools faidx cd-hit-scaffolds.fasta\n";
+					}
 					
 					FileWriter shellFileWriter = new FileWriter(outputDirName + "/bin-" + binNum + "/run.sh");
 					shellFileWriter.write("#!/bin/bash\n");
@@ -559,15 +576,28 @@ public class GrowScaffolds {
 	private void runAlignment(String outputDir) {
 		String cmd = "";
 		try {
-			cmd = "cd " + outputDir + "\n"
-					+ "bedtools getfasta -fi scaffold.fasta -bed scaffold-start-end.bed -fo scaffold-start-end.fasta\n"
-					+ "rm -r salmon-index\n"
-					+ "rm -r salmon-res\n"
-					+ "rm salmon-mapped.sam\n"
-					+ "salmon index -t scaffold-start-end.fasta -i salmon-index\n"
-					+ "/usr/bin/time -f \"\t%E Elasped Real Time\" salmon quant -i salmon-index -l A "
-					+ "-1 " + read1 + " -2 " + read2 + " -o salmon-res --writeMappings -p 16 "
-					+ "| samtools view -bS - | samtools view -h -F 0x04 - > salmon-mapped.sam\n";
+		    if (read2.isEmpty()) {
+		        cmd = "cd " + outputDir + "\n"
+                    + "bedtools getfasta -fi scaffold.fasta -bed scaffold-start-end.bed -fo scaffold-start-end.fasta\n"
+                    + "rm -r salmon-index\n"
+                    + "rm -r salmon-res\n"
+                    + "rm salmon-mapped.sam\n"
+                    + "salmon index -t scaffold-start-end.fasta -i salmon-index\n"
+                    + "/usr/bin/time -f \"\t%E Elasped Real Time\" salmon quant -i salmon-index -l A "
+                    + "-r " + read1 + " -o salmon-res --writeMappings -p 16 "
+                    + "| samtools view -bS - | samtools view -h -F 0x04 - > salmon-mapped.sam\n";
+		    }
+		    else {
+        			cmd = "cd " + outputDir + "\n"
+        					+ "bedtools getfasta -fi scaffold.fasta -bed scaffold-start-end.bed -fo scaffold-start-end.fasta\n"
+        					+ "rm -r salmon-index\n"
+        					+ "rm -r salmon-res\n"
+        					+ "rm salmon-mapped.sam\n"
+        					+ "salmon index -t scaffold-start-end.fasta -i salmon-index\n"
+        					+ "/usr/bin/time -f \"\t%E Elasped Real Time\" salmon quant -i salmon-index -l A "
+        					+ "-1 " + read1 + " -2 " + read2 + " -o salmon-res --writeMappings -p 16 "
+        					+ "| samtools view -bS - | samtools view -h -F 0x04 - > salmon-mapped.sam\n";
+		    }
 			
 			FileWriter shellFileWriter = new FileWriter(outputDir + "/run.sh");
 			shellFileWriter.write("#!/bin/bash\n");
@@ -589,12 +619,22 @@ public class GrowScaffolds {
 	private void getMappedReads(String outputDir) {		
 		String cmd = "";
 		try {
-			cmd = "cd " + outputDir + "\n" 
-					+ "rm -r tmp\n" 
-					+ "mkdir tmp\n"
-					+ "bash filterbyname.sh in=" + read1 + " in2=" + read2
-					+ " out=tmp/mapped_reads_1.fastq out2=tmp/mapped_reads_2.fastq names="
-					+ "salmon-mapped.sam include=t\n";
+		    if (read2.isEmpty()) {
+		        cmd = "cd " + outputDir + "\n" 
+                    + "rm -r tmp\n" 
+                    + "mkdir tmp\n"
+                    + "bash filterbyname.sh in=" + read1
+                    + " out=tmp/mapped_reads_1.fastq names="
+                    + "salmon-mapped.sam include=t\n";
+		    }
+		    else {
+		        cmd = "cd " + outputDir + "\n" 
+                    + "rm -r tmp\n" 
+                    + "mkdir tmp\n"
+                    + "bash filterbyname.sh in=" + read1 + " in2=" + read2
+                    + " out=tmp/mapped_reads_1.fastq out2=tmp/mapped_reads_2.fastq names="
+                    + "salmon-mapped.sam include=t\n";
+		    }			
 
 			FileWriter shellFileWriter = new FileWriter(outputDir + "/run.sh");
 			shellFileWriter.write("#!/bin/bash\n");
@@ -616,12 +656,22 @@ public class GrowScaffolds {
 	private void runSpades(String outputDir) {
 		String cmd = "";
 		try {
-			cmd = "cd " + outputDir + "/tmp\n" 
-					+ "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
-					+ "spades-res -1 mapped_reads_1.fastq -2 mapped_reads_2.fastq "
-					+ "--trusted-contigs ../scaffold.fasta -k 21 --only-assembler\n"
-					+ "cd spades-res\n"
-					+ "samtools faidx scaffolds.fasta\n";
+		    if (read2.isEmpty()) {
+		        cmd = "cd " + outputDir + "/tmp\n" 
+                    + "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
+                    + "spades-res --12 mapped_reads_1.fastq "
+                    + "--trusted-contigs ../scaffold.fasta -k 21 --only-assembler\n"
+                    + "cd spades-res\n"
+                    + "samtools faidx scaffolds.fasta\n";
+		    }
+		    else {
+        			cmd = "cd " + outputDir + "/tmp\n" 
+        					+ "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
+        					+ "spades-res -1 mapped_reads_1.fastq -2 mapped_reads_2.fastq "
+        					+ "--trusted-contigs ../scaffold.fasta -k 21 --only-assembler\n"
+        					+ "cd spades-res\n"
+        					+ "samtools faidx scaffolds.fasta\n";
+		    }
 
 			FileWriter shellFileWriter = new FileWriter(outputDir + "/run.sh");
 			shellFileWriter.write("#!/bin/bash\n");
@@ -1192,15 +1242,27 @@ public class GrowScaffolds {
 		String cmd = "";
 		
 		try {
-			cmd = "cd " + outputDirName + "/final-results\n"
-					+ "cd scaffold-" + sortedScaffoldNum + "\n"
-					+ "kallisto index -i kallisto-index.idx scaffold-" + sortedScaffoldNum + ".fasta\n"
-					+ "java -cp /research/saima5/virome-project/FastViromeExplorer/bin FastViromeExplorer "
-					+ "-1 " + read1
-					+ " -2 " + read2
-					+ " -i kallisto-index.idx -l length-list.txt -reportRatio true\n"
-					+ "bash pileup.sh "
-					+ "in=FastViromeExplorer-reads-mapped-sorted.sam out=coverage-stat.txt\n";
+		    if (read2.isEmpty()) {
+		        cmd = "cd " + outputDirName + "/final-results\n"
+                    + "cd scaffold-" + sortedScaffoldNum + "\n"
+                    + "kallisto index -i kallisto-index.idx scaffold-" + sortedScaffoldNum + ".fasta\n"
+                    + "java -cp /research/saima5/virome-project/FastViromeExplorer/bin FastViromeExplorer "
+                    + "-1 " + read1
+                    + " -i kallisto-index.idx -l length-list.txt -reportRatio true\n"
+                    + "bash pileup.sh "
+                    + "in=FastViromeExplorer-reads-mapped-sorted.sam out=coverage-stat.txt\n";
+		    }
+		    else {
+        			cmd = "cd " + outputDirName + "/final-results\n"
+        					+ "cd scaffold-" + sortedScaffoldNum + "\n"
+        					+ "kallisto index -i kallisto-index.idx scaffold-" + sortedScaffoldNum + ".fasta\n"
+        					+ "java -cp /research/saima5/virome-project/FastViromeExplorer/bin FastViromeExplorer "
+        					+ "-1 " + read1
+        					+ " -2 " + read2
+        					+ " -i kallisto-index.idx -l length-list.txt -reportRatio true\n"
+        					+ "bash pileup.sh "
+        					+ "in=FastViromeExplorer-reads-mapped-sorted.sam out=coverage-stat.txt\n";
+		    }
 			
 			FileWriter shellFileWriter = new FileWriter(outputDirName +
 					"/final-results/scaffold-" + sortedScaffoldNum + "/run.sh");
