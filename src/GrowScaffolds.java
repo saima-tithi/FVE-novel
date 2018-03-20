@@ -59,7 +59,7 @@ public class GrowScaffolds {
 		else if (dbType.equals("imgvr")) {
 			dbFastaFile = "mVCs_PaezEspino_Nature.fna";
 			dbFaiFile = "mVCs_PaezEspino_Nature.fna.fai";
-			dbClusterFile = "final-clusters-final-0.15.txt";
+			dbClusterFile = "mVCs_PaezEspino_Nature_clusters.txt";
 		}
 	}
 	
@@ -878,6 +878,226 @@ public class GrowScaffolds {
 		runCdhit();
 	}
 	
+	private void getBinAndANIInfo() {
+        Map<Integer, Integer> scaffoldToBinMap = new HashMap<Integer, Integer>();
+        //get scaffold-bin map
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new FileReader(outputDirName + "/seed-scaffolds/binInfo.txt"));
+            String str = "";
+            String[] results;
+            while ((str = br.readLine()) != null) 
+            {
+                str = str.trim();
+                results = str.split("\t");
+                int scaffold = Integer.parseInt(results[0].substring(results[0].indexOf('-')+1));
+                int bin = Integer.parseInt(results[2].substring(results[2].indexOf('-')+1));
+                scaffoldToBinMap.put(scaffold, bin);
+            }
+            br.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        int originalScaffoldNum = 0;
+        int binNum = 0;
+        String fastaHeader = "";
+        int sortedScaffoldNum = 0;
+        Set<Integer> genomesInBin;
+        String cmd = "";
+        String ANIRes = "";
+        double refANI = 0;
+        double qryANI = 0;
+        double alignedNuclRef = 0;
+        double alignedNuclQry = 0;
+        int refLength = 0;
+        int qryLength = 0;
+        
+        BufferedReader brDnaDiff = null;
+        BufferedWriter bwBin = null;
+        BufferedWriter bwANI = null;
+        try {
+            br = new BufferedReader(new FileReader(outputDirName 
+                    + "/final-results/final-scaffolds.fasta.fai"));
+            bwBin = new BufferedWriter(new FileWriter(outputDirName 
+                    + "/final-results/bin-info.tsv"));
+            bwBin.write("ScaffoldNum\tBin(Genomes/contigs in this bin)\n");
+            
+            bwANI = new BufferedWriter(new FileWriter(outputDirName 
+                    + "/final-results/ANI-info.tsv"));
+            bwANI.write("ScaffoldNum\tdnadiff output from MUMmer tool\n");
+            
+            String str = "";
+            String[] results;
+            
+            while ((str = br.readLine()) != null) 
+            {
+                str = str.trim();
+                results = str.split("\t");
+                fastaHeader = results[0].trim();
+                
+                originalScaffoldNum = Integer.parseInt(fastaHeader.substring(0, fastaHeader.indexOf('-')));
+                binNum = scaffoldToBinMap.get(originalScaffoldNum);
+                
+                bwBin.write("Scaffold-" + sortedScaffoldNum + "\tBin-" + binNum + "(");
+                genomesInBin = clusters.get(binNum);
+                boolean firstElem = true;
+                for (int genomeId:genomesInBin) 
+                {
+                    if (firstElem) {
+                        bwBin.write(indexToContigMap.get(genomeId));
+                        firstElem = false;
+                    }
+                    else {
+                        bwBin.write(", " + indexToContigMap.get(genomeId));
+                    }
+                }
+                bwBin.write(")\n");
+                
+                cmd = "";
+                try {
+                    cmd = "cd " + outputDirName + "/final-results\n"
+                            + "mkdir scaffold-" + sortedScaffoldNum + "\n"
+                            + "cd scaffold-" + sortedScaffoldNum + "\n"
+                            + "bash filterbyname.sh in=../final-scaffolds.fasta "
+                            + "out=scaffold-" + sortedScaffoldNum + ".fasta names=" + fastaHeader + " include=t\n"
+                            + "samtools faidx scaffold-" + sortedScaffoldNum + ".fasta\n";
+                    
+                    FileWriter shellFileWriter = new FileWriter(outputDirName + "/final-results/run.sh");
+                    shellFileWriter.write("#!/bin/bash\n");
+                    shellFileWriter.write(cmd);
+                    shellFileWriter.close();
+    
+                    ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/final-results/run.sh");
+                    builder.redirectError(Redirect.appendTo(new File(outputDirName + "/final-results/log.txt")));
+                    Process process = builder.start();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    while (reader.readLine() != null) {
+                    }
+                    process.waitFor();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //for each genome in bin, get fasta
+                for (int genomeId:genomesInBin) 
+                {
+                    cmd = "";
+                    try 
+                    {
+                        cmd = "cd " + outputDirName + "/final-results\n"
+                                + "cd scaffold-" + sortedScaffoldNum + "\n"
+                                + "bash filterbyname.sh "
+                                + "in=" + dbDir + "/" + dbFastaFile
+                                + " out=" + genomeId + ".fasta names=" + indexToContigMap.get(genomeId)
+                                + " include=t\n";
+                        
+                        FileWriter shellFileWriter = new FileWriter(outputDirName + "/final-results/run.sh");
+                        shellFileWriter.write("#!/bin/bash\n");
+                        shellFileWriter.write(cmd);
+                        shellFileWriter.close();
+
+                        ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/final-results/run.sh");
+                        builder.redirectError(Redirect.appendTo(new File(outputDirName + "/final-results/log.txt")));
+                        Process process = builder.start();
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                        while (reader.readLine() != null) {
+                        }
+                        process.waitFor();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }   
+                //for each genome in bin, get ANI
+                for (int genomeId:genomesInBin) 
+                {
+                    ANIRes = "";
+                    File genomeFastaFile = new File(outputDirName + "/final-results/scaffold-" + sortedScaffoldNum
+                            + "/" + genomeId + ".fasta");
+                    if(!genomeFastaFile.exists()) {
+                        System.out.println("Could not find genome fasta file");
+                    }
+                    cmd = "";
+                    
+                    try {
+                        cmd = "cd " + outputDirName + "/final-results\n"
+                                + "cd scaffold-" + sortedScaffoldNum + "\n"
+                                + "rm dnadiff-output.*\n"
+                                + "dnadiff "
+                                + genomeId 
+                                + ".fasta scaffold-" + sortedScaffoldNum + ".fasta -p dnadiff-output\n";
+                        
+                        FileWriter shellFileWriter = new FileWriter(outputDirName + "/final-results/run.sh");
+                        shellFileWriter.write("#!/bin/bash\n");
+                        shellFileWriter.write(cmd);
+                        shellFileWriter.close();
+        
+                        ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/final-results/run.sh");
+                        builder.redirectError(Redirect.appendTo(new File(outputDirName + "/final-results/log.txt")));
+                        Process process = builder.start();
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                        while (reader.readLine() != null) {
+                        }
+                        process.waitFor();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    
+                    refANI = 0;
+                    qryANI = 0;
+                    alignedNuclRef = 0;
+                    alignedNuclQry = 0;
+                    refLength = 0;
+                    qryLength = 0;
+                    
+                    try {
+                        brDnaDiff = new BufferedReader(new FileReader(outputDirName + "/final-results/scaffold-" 
+                                + sortedScaffoldNum + "/dnadiff-output.report"));
+                        while ((str = brDnaDiff.readLine()) != null) {
+                            str = str.trim();
+                            if (str.startsWith("TotalBases")) {
+                                results = str.split("\\s+");
+                                refLength = Integer.parseInt(results[1]);
+                                qryLength = Integer.parseInt(results[2]);
+                            }
+                            else if (str.startsWith("AlignedBases")) {
+                                results = str.split("\\s+");
+                                String alignedRef = results[1].substring(results[1].indexOf('(')+1, results[1].length()-2);
+                                alignedNuclRef = Double.parseDouble(alignedRef);
+                                String alignedQry = results[2].substring(results[2].indexOf('(')+1, results[2].length()-2);
+                                alignedNuclQry = Double.parseDouble(alignedQry);
+                            }
+                            else if (str.startsWith("AvgIdentity")) {
+                                results = str.split("\\s+");
+                                refANI = Double.parseDouble(results[1]);
+                                qryANI = Double.parseDouble(results[2]);
+                                break;
+                            }
+                        }
+                        
+                        ANIRes = "Reference:" + indexToContigMap.get(genomeId) + " Length: " + refLength
+                                + " bp (ANI:" + refANI
+                                + "%, Aligned Nucleotide:" + alignedNuclRef + "%), Query:scaffold-" 
+                                + sortedScaffoldNum + ".fasta" + " Length: " + qryLength 
+                                + " bp (ANI:" + qryANI
+                                + "%, Aligned Nucleotide:" + alignedNuclQry + "%)";
+                        bwANI.write("Scaffold-" + sortedScaffoldNum + "\t" + ANIRes + "\n");
+                        brDnaDiff.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }               
+                sortedScaffoldNum++;
+            }
+            
+            br.close();
+            bwBin.close();
+            bwANI.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("Total final scaffolds: " + sortedScaffoldNum);
+    }
+	
 	private void generateCoverageStat() {
 		String cmd = "";
 		
@@ -1052,7 +1272,7 @@ public class GrowScaffolds {
 					e.printStackTrace();
 				}
 				
-				bw.write(bbmapCov + "\t" + FVERes + "\t" + binInfo + "\n");
+				bw.write(scaffoldNum + "\t" + bbmapCov + "\t" + FVERes + "\t" + binInfo + "\n");
 				scaffoldNum++;
 			}
 			br1.close();
@@ -1061,227 +1281,7 @@ public class GrowScaffolds {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}		
-	}
-	
-	private void getBinAndANIInfo() {
-		Map<Integer, Integer> scaffoldToBinMap = new HashMap<Integer, Integer>();
-		//get scaffold-bin map
-		BufferedReader br = null;
-		try {
-			br = new BufferedReader(new FileReader(outputDirName + "/seed-scaffolds/binInfo.txt"));
-			String str = "";
-			String[] results;
-			while ((str = br.readLine()) != null) 
-			{
-				str = str.trim();
-				results = str.split("\t");
-				int scaffold = Integer.parseInt(results[0].substring(results[0].indexOf('-')+1));
-				int bin = Integer.parseInt(results[2].substring(results[2].indexOf('-')+1));
-				scaffoldToBinMap.put(scaffold, bin);
-			}
-			br.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		int originalScaffoldNum = 0;
-		int binNum = 0;
-		String fastaHeader = "";
-		int sortedScaffoldNum = 0;
-		Set<Integer> genomesInBin;
-		String cmd = "";
-		String ANIRes = "";
-		double refANI = 0;
-		double qryANI = 0;
-		double alignedNuclRef = 0;
-		double alignedNuclQry = 0;
-		int refLength = 0;
-		int qryLength = 0;
-		
-		BufferedReader brDnaDiff = null;
-		BufferedWriter bwBin = null;
-		BufferedWriter bwANI = null;
-		try {
-			br = new BufferedReader(new FileReader(outputDirName 
-					+ "/final-results/final-scaffolds.fasta.fai"));
-			bwBin = new BufferedWriter(new FileWriter(outputDirName 
-					+ "/final-results/bin-info.tsv"));
-			bwBin.write("ScaffoldNum\tBin(Genomes in this bin)\n");
-			
-			bwANI = new BufferedWriter(new FileWriter(outputDirName 
-					+ "/final-results/ANI-info.tsv"));
-			bwANI.write("ScaffoldNum\tdnadiff output from mummer\n");
-			
-			String str = "";
-			String[] results;
-			
-			while ((str = br.readLine()) != null) 
-			{
-				str = str.trim();
-				results = str.split("\t");
-				fastaHeader = results[0].trim();
-				
-				originalScaffoldNum = Integer.parseInt(fastaHeader.substring(0, fastaHeader.indexOf('-')));
-				binNum = scaffoldToBinMap.get(originalScaffoldNum);
-				
-				bwBin.write("Scaffold-" + sortedScaffoldNum + "\tBin-" + binNum + "(");
-				genomesInBin = clusters.get(binNum);
-				boolean firstElem = true;
-				for (int genomeId:genomesInBin) 
-				{
-					if (firstElem) {
-						bwBin.write(indexToContigMap.get(genomeId));
-						firstElem = false;
-					}
-					else {
-						bwBin.write(", " + indexToContigMap.get(genomeId));
-					}
-				}
-				bwBin.write(")\n");
-				
-				cmd = "";
-				try {
-					cmd = "cd " + outputDirName + "/final-results\n"
-							+ "mkdir scaffold-" + sortedScaffoldNum + "\n"
-							+ "cd scaffold-" + sortedScaffoldNum + "\n"
-							+ "bash filterbyname.sh in=../final-scaffolds.fasta "
-							+ "out=scaffold-" + sortedScaffoldNum + ".fasta names=" + fastaHeader + " include=t\n"
-							+ "samtools faidx scaffold-" + sortedScaffoldNum + ".fasta\n";
-					
-					FileWriter shellFileWriter = new FileWriter(outputDirName + "/final-results/run.sh");
-					shellFileWriter.write("#!/bin/bash\n");
-					shellFileWriter.write(cmd);
-					shellFileWriter.close();
-	
-					ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/final-results/run.sh");
-					builder.redirectError(Redirect.appendTo(new File(outputDirName + "/final-results/log.txt")));
-					Process process = builder.start();
-					BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-					while (reader.readLine() != null) {
-					}
-					process.waitFor();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				//for each genome in bin, get fasta
-				for (int genomeId:genomesInBin) 
-				{
-					cmd = "";
-					try 
-					{
-						cmd = "cd " + outputDirName + "/final-results\n"
-								+ "cd scaffold-" + sortedScaffoldNum + "\n"
-								+ "bash filterbyname.sh "
-								+ "in=" + dbDir + "/" + dbFastaFile
-								+ " out=" + genomeId + ".fasta names=" + indexToContigMap.get(genomeId)
-								+ " include=t\n";
-						
-						FileWriter shellFileWriter = new FileWriter(outputDirName + "/final-results/run.sh");
-						shellFileWriter.write("#!/bin/bash\n");
-						shellFileWriter.write(cmd);
-						shellFileWriter.close();
-
-						ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/final-results/run.sh");
-						builder.redirectError(Redirect.appendTo(new File(outputDirName + "/final-results/log.txt")));
-						Process process = builder.start();
-						BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-						while (reader.readLine() != null) {
-						}
-						process.waitFor();
-					} catch (Exception ex) {
-						ex.printStackTrace();
-					}
-				}	
-				//for each genome in bin, get ANI
-				for (int genomeId:genomesInBin) 
-				{
-					ANIRes = "";
-					File genomeFastaFile = new File(outputDirName + "/final-results/scaffold-" + sortedScaffoldNum
-							+ "/" + genomeId + ".fasta");
-					if(!genomeFastaFile.exists()) {
-						System.out.println("Could not find genome fasta file");
-					}
-					cmd = "";
-					
-					try {
-						cmd = "cd " + outputDirName + "/final-results\n"
-								+ "cd scaffold-" + sortedScaffoldNum + "\n"
-								+ "rm dnadiff-output.*\n"
-								+ "dnadiff "
-								+ genomeId 
-								+ ".fasta scaffold-" + sortedScaffoldNum + ".fasta -p dnadiff-output\n";
-						
-						FileWriter shellFileWriter = new FileWriter(outputDirName + "/final-results/run.sh");
-						shellFileWriter.write("#!/bin/bash\n");
-						shellFileWriter.write(cmd);
-						shellFileWriter.close();
-		
-						ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/final-results/run.sh");
-						builder.redirectError(Redirect.appendTo(new File(outputDirName + "/final-results/log.txt")));
-						Process process = builder.start();
-						BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-						while (reader.readLine() != null) {
-						}
-						process.waitFor();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					
-					refANI = 0;
-					qryANI = 0;
-					alignedNuclRef = 0;
-					alignedNuclQry = 0;
-					refLength = 0;
-					qryLength = 0;
-					
-					try {
-						brDnaDiff = new BufferedReader(new FileReader(outputDirName + "/final-results/scaffold-" 
-								+ sortedScaffoldNum + "/dnadiff-output.report"));
-						while ((str = brDnaDiff.readLine()) != null) {
-							str = str.trim();
-							if (str.startsWith("TotalBases")) {
-								results = str.split("\\s+");
-								refLength = Integer.parseInt(results[1]);
-								qryLength = Integer.parseInt(results[2]);
-							}
-							else if (str.startsWith("AlignedBases")) {
-								results = str.split("\\s+");
-								String alignedRef = results[1].substring(results[1].indexOf('(')+1, results[1].length()-2);
-								alignedNuclRef = Double.parseDouble(alignedRef);
-								String alignedQry = results[2].substring(results[2].indexOf('(')+1, results[2].length()-2);
-								alignedNuclQry = Double.parseDouble(alignedQry);
-							}
-							else if (str.startsWith("AvgIdentity")) {
-								results = str.split("\\s+");
-								refANI = Double.parseDouble(results[1]);
-								qryANI = Double.parseDouble(results[2]);
-								break;
-							}
-						}
-						
-						ANIRes = "Reference:" + indexToContigMap.get(genomeId) + " Length: " + refLength
-								+ " bp (ANI:" + refANI
-								+ "%, Aligned Nucleotide:" + alignedNuclRef + "%), Query:scaffold-" 
-								+ sortedScaffoldNum + ".fasta" + " Length: " + qryLength 
-								+ " bp (ANI:" + qryANI
-								+ "%, Aligned Nucleotide:" + alignedNuclQry + "%)";
-						bwANI.write("Scaffold-" + sortedScaffoldNum + "\t" + ANIRes + "\n");
-						brDnaDiff.close();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}				
-				sortedScaffoldNum++;
-			}
-			
-			br.close();
-			bwBin.close();
-			bwANI.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		System.out.println("Total final scaffolds: " + sortedScaffoldNum);
-	}
+	}	
 	
 	public void getANIInfo() {
 		getBinAndANIInfo();
