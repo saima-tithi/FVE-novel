@@ -400,7 +400,7 @@ public class GrowScaffolds {
                             + "out=reads_1.fastq names=readIds.txt "
                             + "include=t\n"
                             + "spades.py "
-                            + "-o metaSpades-res -r reads_1.fastq --only-assembler\n"
+                            + "-o metaSpades-res -s reads_1.fastq --only-assembler\n"
                             + "cd metaSpades-res\n"
                             + "samtools faidx scaffolds.fasta\n"
                             + "cd-hit-est -i scaffolds.fasta -o cd-hit-scaffolds.fasta "
@@ -659,7 +659,7 @@ public class GrowScaffolds {
 		    if (read2.isEmpty()) {
 		        cmd = "cd " + outputDir + "/tmp\n" 
                     + "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
-                    + "spades-res -r mapped_reads_1.fastq "
+                    + "spades-res -s mapped_reads_1.fastq "
                     + "--trusted-contigs ../scaffold.fasta -k 21 --only-assembler\n"
                     + "cd spades-res\n"
                     + "samtools faidx scaffolds.fasta\n";
