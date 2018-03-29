@@ -775,7 +775,7 @@ public class GrowScaffolds {
 				extendContig = false;
 			}
 			
-			if (extendContig && iteration > 500) {
+			if (extendContig && iteration > 1000) {
 				extendContig = false;
 			}
 		}
