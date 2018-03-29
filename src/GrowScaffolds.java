@@ -44,6 +44,7 @@ public class GrowScaffolds {
 	private double avgReadLen = 0;
 	private int numThreads = 4;
 	private double cdHitCuttOff = 0.95;
+	private static int spadesKmerlen = 21;
 	
 	private void setDbFiles() {
 		if (dbType.equals("gov")) {
@@ -660,7 +661,8 @@ public class GrowScaffolds {
 		        cmd = "cd " + outputDir + "/tmp\n" 
                     + "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
                     + "spades-res -s mapped_reads_1.fastq "
-                    + "--trusted-contigs ../scaffold.fasta -k 21 --only-assembler\n"
+                    + "--trusted-contigs ../scaffold.fasta -k " + spadesKmerlen
+                    + " --only-assembler\n"
                     + "cd spades-res\n"
                     + "samtools faidx scaffolds.fasta\n";
 		    }
@@ -668,7 +670,8 @@ public class GrowScaffolds {
         			cmd = "cd " + outputDir + "/tmp\n" 
         					+ "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
         					+ "spades-res -1 mapped_reads_1.fastq -2 mapped_reads_2.fastq "
-        					+ "--trusted-contigs ../scaffold.fasta -k 21 --only-assembler\n"
+        					+ "--trusted-contigs ../scaffold.fasta -k " + spadesKmerlen
+        					+ " --only-assembler\n"
         					+ "cd spades-res\n"
         					+ "samtools faidx scaffolds.fasta\n";
 		    }
@@ -1356,7 +1359,7 @@ public class GrowScaffolds {
 	
 	public void initialize(String read1, String read2, String outputDirName, 
 			String FVEResDir, String dbType, String dbDir, int numThreads, int minFoldCov, int minScaffoldLen,
-			int topBins) {
+			int topBins, int spadesKmerLength) {
 		
 		this.read1 = read1;
 		this.read2  = read2;
@@ -1368,6 +1371,7 @@ public class GrowScaffolds {
 		this.minFoldCov = minFoldCov;
 		this.minScaffoldLen = minScaffoldLen;
 		this.topBins = topBins;
+		this.spadesKmerlen = spadesKmerLength;
 		
 		setDbFiles();
 		generateCoverageStatForFVE();
