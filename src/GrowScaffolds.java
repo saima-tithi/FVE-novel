@@ -44,7 +44,7 @@ public class GrowScaffolds {
 	private double avgReadLen = 0;
 	private int numThreads = 4;
 	private double cdHitCuttOff = 0.95;
-	private static int spadesKmerlen = 21;
+	private String spadesKmerlen = "21";
 	
 	private void setDbFiles() {
 		if (dbType.equals("gov")) {
@@ -1359,7 +1359,7 @@ public class GrowScaffolds {
 	
 	public void initialize(String read1, String read2, String outputDirName, 
 			String FVEResDir, String dbType, String dbDir, int numThreads, int minFoldCov, int minScaffoldLen,
-			int topBins, int spadesKmerLength) {
+			int topBins, String spadesKmerLength) {
 		
 		this.read1 = read1;
 		this.read2  = read2;

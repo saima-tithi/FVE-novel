@@ -12,7 +12,7 @@ public class FVENovel {
 	private static String dbType = "";
 	private static String dbDir = "";
 	private static boolean reportCoverage = false;
-	private static int spadesKmerlen = 21;
+	private static String spadesKmerlen = "21";
 	private static boolean generateSeeds = true;
 	
 	private static void printUsage() {
@@ -61,7 +61,7 @@ public class FVENovel {
 						} else if (args[i].equals("-topBins")) {
 							TOP_BINS = Integer.parseInt(args[i + 1]);
 						} else if (args[i].equals("-spadeskmer")) {
-                            spadesKmerlen = Integer.parseInt(args[i + 1]);
+                            spadesKmerlen = args[i + 1];
                         } else if (args[i].equals("-generateSeeds")) {
                             if (args[i + 1].equals("true")) {
                                 generateSeeds = true;
