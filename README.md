@@ -67,6 +67,8 @@ javac -d bin src/*.java
 java -cp bin FVENovel -1 $read1File -2 $read2File -o /path-to-results/FVE-novel-outputDirectory -fveres /path-to-results/FVE-outputDirectory -dbType gov -dbDir /path-to-referencedb-folder/GOV-viral-populations -topBins 1
 ```
 
+As FastViromeExplorer-novel is a multi-threaded program and most of the dependant tools (Spades, Salmon, CD-HIT, bbmap) also uses multi-threading, running it with more processors and more memory will significantly speed up the program.
+
 # Output
 The ouput folders and files will be generated in the `FVE-novel-outputDirectory` folder. The outputs will be stored in `final-results` folder inside `FVE-novel-outputDirectory` folder.
 
