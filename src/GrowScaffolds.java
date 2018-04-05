@@ -974,7 +974,7 @@ public class GrowScaffolds {
                     + "/final-results/final-scaffolds.fasta.fai"));
             bwBin = new BufferedWriter(new FileWriter(outputDirName 
                     + "/final-results/bin-info.tsv"));
-            bwBin.write("ScaffoldNum\tBin(Genomes/contigs in this bin)\n");
+            bwBin.write("ScaffoldNum\tScaffold\tBin(Genomes/contigs in this bin)\n");
             
             bwANI = new BufferedWriter(new FileWriter(outputDirName 
                     + "/final-results/ANI-info.tsv"));
@@ -992,7 +992,7 @@ public class GrowScaffolds {
                 originalScaffoldNum = Integer.parseInt(fastaHeader.substring(0, fastaHeader.indexOf('-')));
                 binNum = scaffoldToBinMap.get(originalScaffoldNum);
                 
-                bwBin.write("Scaffold-" + sortedScaffoldNum + "\tBin-" + binNum + "(");
+                bwBin.write("Scaffold-" + sortedScaffoldNum + "\t" + fastaHeader + "\tBin-" + binNum + "(");
                 genomesInBin = clusters.get(binNum);
                 boolean firstElem = true;
                 for (int genomeId:genomesInBin) 
