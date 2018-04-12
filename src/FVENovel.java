@@ -14,6 +14,7 @@ public class FVENovel {
 	private static boolean reportCoverage = false;
 	private static String spadesKmerlen = "21";
 	private static boolean generateSeeds = true;
+	private static int seedExtensionStart = 0;
 	
 	private static void printUsage() {
 	    System.out.println("Usage:");
@@ -62,6 +63,8 @@ public class FVENovel {
 							TOP_BINS = Integer.parseInt(args[i + 1]);
 						} else if (args[i].equals("-spadeskmer")) {
                             spadesKmerlen = args[i + 1];
+                        } else if (args[i].equals("-seedExtensionStart")) {
+                            seedExtensionStart = Integer.parseInt(args[i + 1]);
                         } else if (args[i].equals("-generateSeeds")) {
                             if (args[i + 1].equals("true")) {
                                 generateSeeds = true;
@@ -115,7 +118,7 @@ public class FVENovel {
 		}
 		
 		System.out.println("Started growing seed scaffolds: " + LocalDateTime.now());
-		growScaffolds.growSeedScaffolds(totalSeedScaffolds);
+		growScaffolds.growSeedScaffolds(totalSeedScaffolds, seedExtensionStart);
 		System.out.println("Finished growing seed scaffolds: " + LocalDateTime.now());
 		
 		growScaffolds.getFinalScaffolds(totalSeedScaffolds);

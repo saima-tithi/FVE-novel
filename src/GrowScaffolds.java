@@ -122,6 +122,7 @@ public class GrowScaffolds {
             System.out.println("Could not extract average read length from read file.");
             System.exit(1);
         }
+	    System.out.println("Average estimated read lenght: " + avgReadLen);
 	}
 	
 	private void createHashMap() {
@@ -219,13 +220,13 @@ public class GrowScaffolds {
 					cluster.add(key);
 					clusters.add(cluster);
 				}
-			}
-			System.out.println("Total num of initial bins: " + clusters.size());
+			}			
 			contigIds = null;
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+		System.out.println("Total num of initial bins: " + clusters.size());
 	}
 	
 	private boolean isCovGood(Set<Integer> cluster) {
@@ -797,10 +798,14 @@ public class GrowScaffolds {
 		}
 	}
 	
-	public void growSeedScaffolds(int totalSeedScaffolds) {		
+	public void growSeedScaffolds(int totalSeedScaffolds, int seedExtensionStart) {		
 		//extend contigs in parallel
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-		for (int i = 0; i < totalSeedScaffolds; i++) {
+		if (seedExtensionStart >= totalSeedScaffolds) {
+		    System.out.println("Invalid seedExtension starting number. Changing it to 0");
+		    seedExtensionStart = 0;
+		}
+		for (int i = seedExtensionStart; i < totalSeedScaffolds; i++) {
 			Runnable worker = new MyRunnableGrowScaffold(i);
 			executor.execute(worker);
 		}
