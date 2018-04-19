@@ -659,22 +659,44 @@ public class GrowScaffolds {
 		String cmd = "";
 		try {
 		    if (read2.isEmpty()) {
-		        cmd = "cd " + outputDir + "/tmp\n" 
-                    + "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
-                    + "spades-res -s mapped_reads_1.fastq "
-                    + "--trusted-contigs ../scaffold.fasta -k " + spadesKmerlen
-                    + " --only-assembler\n"
-                    + "cd spades-res\n"
-                    + "samtools faidx scaffolds.fasta\n";
+		        if (spadesKmerlen.equals("default")) {
+		            cmd = "cd " + outputDir + "/tmp\n" 
+	                    + "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
+	                    + "spades-res -s mapped_reads_1.fastq "
+	                    + "--trusted-contigs ../scaffold.fasta"
+	                    + " --only-assembler\n"
+	                    + "cd spades-res\n"
+	                    + "samtools faidx scaffolds.fasta\n";
+		        }
+		        else {
+        		        cmd = "cd " + outputDir + "/tmp\n" 
+                            + "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
+                            + "spades-res -s mapped_reads_1.fastq "
+                            + "--trusted-contigs ../scaffold.fasta -k " + spadesKmerlen
+                            + " --only-assembler\n"
+                            + "cd spades-res\n"
+                            + "samtools faidx scaffolds.fasta\n";
+		        }
 		    }
 		    else {
-        			cmd = "cd " + outputDir + "/tmp\n" 
-        					+ "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
-        					+ "spades-res -1 mapped_reads_1.fastq -2 mapped_reads_2.fastq "
-        					+ "--trusted-contigs ../scaffold.fasta -k " + spadesKmerlen
-        					+ " --only-assembler\n"
-        					+ "cd spades-res\n"
-        					+ "samtools faidx scaffolds.fasta\n";
+		        if (spadesKmerlen.equals("default")) {
+		            cmd = "cd " + outputDir + "/tmp\n" 
+                        + "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
+                        + "spades-res -1 mapped_reads_1.fastq -2 mapped_reads_2.fastq "
+                        + "--trusted-contigs ../scaffold.fasta"
+                        + " --only-assembler\n"
+                        + "cd spades-res\n"
+                        + "samtools faidx scaffolds.fasta\n";
+		        }
+		        else {
+            			cmd = "cd " + outputDir + "/tmp\n" 
+            					+ "/usr/bin/time -f \"\t%E Elasped Real Time\" spades.py -o "
+            					+ "spades-res -1 mapped_reads_1.fastq -2 mapped_reads_2.fastq "
+            					+ "--trusted-contigs ../scaffold.fasta -k " + spadesKmerlen
+            					+ " --only-assembler\n"
+            					+ "cd spades-res\n"
+            					+ "samtools faidx scaffolds.fasta\n";
+		        }
 		    }
 
 			FileWriter shellFileWriter = new FileWriter(outputDir + "/run.sh");
@@ -983,7 +1005,7 @@ public class GrowScaffolds {
             
             bwANI = new BufferedWriter(new FileWriter(outputDirName 
                     + "/final-results/ANI-info.tsv"));
-            bwANI.write("ScaffoldNum\tdnadiff output from MUMmer tool\n");
+            bwANI.write("ScaffoldNum\tScaffold\tdnadiff output from MUMmer tool\n");
             
             String str = "";
             String[] results;
@@ -1138,7 +1160,7 @@ public class GrowScaffolds {
                                 + sortedScaffoldNum + ".fasta" + " Length: " + qryLength 
                                 + " bp (ANI:" + qryANI
                                 + "%, Aligned Nucleotide:" + alignedNuclQry + "%)";
-                        bwANI.write("Scaffold-" + sortedScaffoldNum + "\t" + ANIRes + "\n");
+                        bwANI.write("Scaffold-" + sortedScaffoldNum + "\t" + fastaHeader + "\t" + ANIRes + "\n");
                         brDnaDiff.close();
                     } catch (Exception e) {
                         e.printStackTrace();
