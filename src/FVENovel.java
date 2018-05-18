@@ -125,7 +125,9 @@ public class FVENovel {
 		
 		growScaffolds.getANIInfo();
 		if (reportCoverage) {
+		    System.out.println("Started generating coverage stat for all scaffolds: " + LocalDateTime.now());
 			growScaffolds.getCoverageInfo();
+			System.out.println("Finished generating coverage stat for all scaffolds: " + LocalDateTime.now());
 		}
 	}
 }

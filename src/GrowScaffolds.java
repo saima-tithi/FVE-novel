@@ -1364,7 +1364,7 @@ public class GrowScaffolds {
 					e.printStackTrace();
 				}
 				
-				bw.write(scaffoldNum + "\t" + bbmapCov + "\t" + FVERes + "\t" + binInfo + "\n");
+				bw.write("Scaffold-" + scaffoldNum + "\t" + bbmapCov + "\t" + FVERes + "\t" + binInfo + "\n");
 				scaffoldNum++;
 			}
 			br1.close();
