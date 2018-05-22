@@ -44,7 +44,7 @@ public class GrowScaffolds {
 	private double avgReadLen = 0;
 	private int numThreads = 4;
 	private double cdHitCuttOff = 0.95;
-	private String spadesKmerlen = "21";
+	private String spadesKmerlen = "default";
 	
 	private void setDbFiles() {
 		if (dbType.equals("gov")) {
@@ -122,7 +122,7 @@ public class GrowScaffolds {
             System.out.println("Could not extract average read length from read file.");
             System.exit(1);
         }
-	    System.out.println("Average estimated read lenght: " + avgReadLen);
+	    System.out.println("Average estimated read length: " + avgReadLen);
 	}
 	
 	private void createHashMap() {
@@ -1202,7 +1202,7 @@ public class GrowScaffolds {
 		}
 		//System.out.println("Scaffold to bin map size: " + scaffoldToBinMap.size());
 		
-		int sortedScaffoldNum = 0;
+		/*int sortedScaffoldNum = 0;
 		try {
 			br = new BufferedReader(new FileReader(outputDirName 
 					+ "/final-results/final-scaffolds.fasta.fai"));
@@ -1240,8 +1240,23 @@ public class GrowScaffolds {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		//System.out.println("Total scaffolds: " + sortedScaffoldNum);
+		//System.out.println("Total scaffolds: " + sortedScaffoldNum);*/
 		
+		int sortedScaffoldNum = 0;
+        try {
+            br = new BufferedReader(new FileReader(outputDirName 
+                    + "/final-results/final-scaffolds.fasta.fai"));
+            String str = "";
+            
+            while ((str = br.readLine()) != null) 
+            {
+                sortedScaffoldNum++;
+            }
+            br.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 		for (int i = 0; i < sortedScaffoldNum; i++) {
 			Runnable worker = new MyRunnableGetCoverageInfo(i);
@@ -1275,23 +1290,29 @@ public class GrowScaffolds {
 		    if (read2.isEmpty()) {
 		        cmd = "cd " + outputDirName + "/final-results\n"
                     + "cd scaffold-" + sortedScaffoldNum + "\n"
-                    + "kallisto index -i kallisto-index.idx scaffold-" + sortedScaffoldNum + ".fasta\n"
-                    + "java -cp /research/saima5/virome-project/FastViromeExplorer/bin FastViromeExplorer "
+                    + "bowtie2-build scaffold-" + sortedScaffoldNum + ".fasta bowtie2-index\n"
+                    + "bowtie2 -x bowtie2-index "
                     + "-1 " + read1
-                    + " -i kallisto-index.idx -l length-list.txt -reportRatio true\n"
+                    + " | samtools view -bS - | samtools view -h -F 0x04 -b - | "
+                    + "samtools sort - -o bowtie2-mapped.sam\n"
+                    + "samtools view -bS bowtie2-mapped.sam | samtools sort - -o bowtie2-mapped.bam\n"
+                    + "samtools depth bowtie2-mapped.bam > samtools-coverage.txt\n"
                     + "bash pileup.sh "
-                    + "in=FastViromeExplorer-reads-mapped-sorted.sam out=coverage-stat.txt\n";
+                    + "in=bowtie2-mapped.sam out=bbmap-coverage.txt\n";
 		    }
 		    else {
         			cmd = "cd " + outputDirName + "/final-results\n"
-        					+ "cd scaffold-" + sortedScaffoldNum + "\n"
-        					+ "kallisto index -i kallisto-index.idx scaffold-" + sortedScaffoldNum + ".fasta\n"
-        					+ "java -cp /research/saima5/virome-project/FastViromeExplorer/bin FastViromeExplorer "
-        					+ "-1 " + read1
-        					+ " -2 " + read2
-        					+ " -i kallisto-index.idx -l length-list.txt -reportRatio true\n"
-        					+ "bash pileup.sh "
-        					+ "in=FastViromeExplorer-reads-mapped-sorted.sam out=coverage-stat.txt\n";
+                    + "cd scaffold-" + sortedScaffoldNum + "\n"
+                    + "bowtie2-build scaffold-" + sortedScaffoldNum + ".fasta bowtie2-index\n"
+                    + "bowtie2 -x bowtie2-index "
+                    + "-1 " + read1
+                    + " -2 " + read2
+                    + " | samtools view -bS - | samtools view -h -F 0x04 -b - | "
+                    + "samtools sort - -o bowtie2-mapped.sam\n"
+                    + "samtools view -bS bowtie2-mapped.sam | samtools sort - -o bowtie2-mapped.bam\n"
+                    + "samtools depth bowtie2-mapped.bam > samtools-coverage.txt\n"
+                    + "bash pileup.sh "
+                    + "in=bowtie2-mapped.sam out=bbmap-coverage.txt\n";
 		    }
 			
 			FileWriter shellFileWriter = new FileWriter(outputDirName +
@@ -1318,12 +1339,11 @@ public class GrowScaffolds {
 	private void summerizeCoverageInfo() {
 		BufferedReader br1 = null;
 		BufferedReader br2 = null;
-		BufferedReader br3 = null;
 		
 		BufferedWriter bw = null;
 		try {
 			bw = new BufferedWriter(new FileWriter(outputDirName 
-					+ "/final-results/all-coverage-info.tsv"));
+					+ "/final-results/coverage-info.tsv"));
 			
 			br1 = new BufferedReader(new FileReader(outputDirName 
 					+ "/final-results/bin-info.tsv"));
@@ -1332,18 +1352,18 @@ public class GrowScaffolds {
 			String str = "";
 			String[] results;
 			int scaffoldNum = 0;
-			String binInfo = "";
+			String scaffInfo = "";
 			String bbmapCov = "";
-			String FVERes = "";
+			br1.readLine();
 			
 			while ((str = br1.readLine()) != null) 
 			{
 				str = str.trim();
 				results = str.split("\t");
-				binInfo = results[1].trim();
+				scaffInfo = results[0].trim() + results[1].trim();
 				try {
 					br2 = new BufferedReader(new FileReader(outputDirName 
-							+ "/final-results/scaffold-" + scaffoldNum + "/coverage-stat.txt"));
+							+ "/final-results/scaffold-" + scaffoldNum + "/bbmap-coverage.txt"));
 					br2.readLine();
 					bbmapCov = br2.readLine();
 					br2.close();
@@ -1351,20 +1371,7 @@ public class GrowScaffolds {
 					e.printStackTrace();
 				}
 				
-				try {
-					br3 = new BufferedReader(new FileReader(outputDirName 
-							+ "/final-results/scaffold-" + scaffoldNum 
-							+ "/FastViromeExplorer-final-sorted-abundance.tsv"));
-					br3.readLine();
-					FVERes = br3.readLine();
-					String[] results1 = FVERes.split("\t");
-					FVERes = results1[3] + "\t" + results1[4] + "\t" + results1[5] + "\t" + results1[6];
-					br3.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-				bw.write("Scaffold-" + scaffoldNum + "\t" + bbmapCov + "\t" + FVERes + "\t" + binInfo + "\n");
+				bw.write(scaffInfo + "\t" + bbmapCov + "\n");
 				scaffoldNum++;
 			}
 			br1.close();

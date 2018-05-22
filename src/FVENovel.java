@@ -12,9 +12,10 @@ public class FVENovel {
 	private static String dbType = "";
 	private static String dbDir = "";
 	private static boolean reportCoverage = false;
-	private static String spadesKmerlen = "21";
+	private static String spadesKmerlen = "default";
 	private static boolean generateSeeds = true;
 	private static int seedExtensionStart = 0;
+	private static boolean onlyStatistics = false;
 	
 	private static void printUsage() {
 	    System.out.println("Usage:");
@@ -82,7 +83,14 @@ public class FVENovel {
 							else {
 								reportCoverage = false;
 							}
-						} else {
+						} else if (args[i].equals("-onlyStatistics")) {
+                            if (args[i + 1].equals("true")) {
+                                onlyStatistics = true;
+                            }
+                            else {
+                                onlyStatistics = false;
+                            }
+                        } else {
 							System.out.println("Invalid argument.");
 							printUsage();
 							System.exit(1);
@@ -100,34 +108,39 @@ public class FVENovel {
 		GrowScaffolds growScaffolds = new GrowScaffolds();
 		growScaffolds.initialize(read1, read2, outputDirName, FVEResDir, dbType, dbDir, MYTHREADS, MIN_FOLD_COV,
 				MIN_SCAFFOLD_LEN, TOP_BINS, spadesKmerlen);
-
-		if (generateSeeds) {
-        		System.out.println("Started 1st round of assembly: " + LocalDateTime.now());
-        		growScaffolds.writeFastqFilesAndAssembly();
-        		System.out.println("Finished 1st round of assembly: " + LocalDateTime.now());
+		if (onlyStatistics) {
+		    growScaffolds.getANIInfo();
+		    growScaffolds.getCoverageInfo();
 		}
 		else {
-		    System.out.println("Skipping 1st round of assembly");
-		}
-		
-		int totalSeedScaffolds = growScaffolds.getSeedScaffolds();
-		System.out.println("Total seed scaffolds: " + totalSeedScaffolds);
-		if (totalSeedScaffolds == 0) {
-			System.out.println("Total seed scaffolds: 0. Couldn't grow scaffolds.");
-			System.exit(0);
-		}
-		
-		System.out.println("Started growing seed scaffolds: " + LocalDateTime.now());
-		growScaffolds.growSeedScaffolds(totalSeedScaffolds, seedExtensionStart);
-		System.out.println("Finished growing seed scaffolds: " + LocalDateTime.now());
-		
-		growScaffolds.getFinalScaffolds(totalSeedScaffolds);
-		
-		growScaffolds.getANIInfo();
-		if (reportCoverage) {
-		    System.out.println("Started generating coverage stat for all scaffolds: " + LocalDateTime.now());
-			growScaffolds.getCoverageInfo();
-			System.out.println("Finished generating coverage stat for all scaffolds: " + LocalDateTime.now());
+        		if (generateSeeds) {
+                		System.out.println("Started 1st round of assembly: " + LocalDateTime.now());
+                		growScaffolds.writeFastqFilesAndAssembly();
+                		System.out.println("Finished 1st round of assembly: " + LocalDateTime.now());
+        		}
+        		else {
+        		    System.out.println("Skipping 1st round of assembly");
+        		}
+        		
+        		int totalSeedScaffolds = growScaffolds.getSeedScaffolds();
+        		System.out.println("Total seed scaffolds: " + totalSeedScaffolds);
+        		if (totalSeedScaffolds == 0) {
+        			System.out.println("Total seed scaffolds: 0. Couldn't grow scaffolds.");
+        			System.exit(0);
+        		}
+        		
+        		System.out.println("Started growing seed scaffolds: " + LocalDateTime.now());
+        		growScaffolds.growSeedScaffolds(totalSeedScaffolds, seedExtensionStart);
+        		System.out.println("Finished growing seed scaffolds: " + LocalDateTime.now());
+        		
+        		growScaffolds.getFinalScaffolds(totalSeedScaffolds);
+        		
+        		growScaffolds.getANIInfo();
+        		if (reportCoverage) {
+        		    System.out.println("Started generating coverage stat for all scaffolds: " + LocalDateTime.now());
+        			growScaffolds.getCoverageInfo();
+        			System.out.println("Finished generating coverage stat for all scaffolds: " + LocalDateTime.now());
+        		}
 		}
 	}
 }
