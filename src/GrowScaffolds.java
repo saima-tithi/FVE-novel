@@ -1292,7 +1292,7 @@ public class GrowScaffolds {
                     + "cd scaffold-" + sortedScaffoldNum + "\n"
                     + "bowtie2-build scaffold-" + sortedScaffoldNum + ".fasta bowtie2-index\n"
                     + "bowtie2 -x bowtie2-index "
-                    + "-1 " + read1
+                    + "-U " + read1
                     + " | samtools view -bS - | samtools view -h -F 0x04 -b - | "
                     + "samtools sort - -o bowtie2-mapped.sam\n"
                     + "samtools view -bS bowtie2-mapped.sam | samtools sort - -o bowtie2-mapped.bam\n"
