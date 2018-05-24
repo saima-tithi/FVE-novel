@@ -1344,11 +1344,11 @@ public class GrowScaffolds {
 		try {
 			bw = new BufferedWriter(new FileWriter(outputDirName 
 					+ "/final-results/coverage-info.tsv"));
+			bw.write("ScaffoldNum\tScaffold\tOutput from bbmap tool\n");
 			
 			br1 = new BufferedReader(new FileReader(outputDirName 
 					+ "/final-results/bin-info.tsv"));
 			
-			br1.readLine();
 			String str = "";
 			String[] results;
 			int scaffoldNum = 0;
@@ -1360,7 +1360,7 @@ public class GrowScaffolds {
 			{
 				str = str.trim();
 				results = str.split("\t");
-				scaffInfo = results[0].trim() + results[1].trim();
+				scaffInfo = results[0].trim() + "\t" + results[1].trim();
 				try {
 					br2 = new BufferedReader(new FileReader(outputDirName 
 							+ "/final-results/scaffold-" + scaffoldNum + "/bbmap-coverage.txt"));
