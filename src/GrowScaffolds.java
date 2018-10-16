@@ -122,7 +122,7 @@ public class GrowScaffolds {
             System.out.println("Could not extract average read length from read file.");
             System.exit(1);
         }
-	    System.out.println("Average estimated read length: " + avgReadLen);
+	    System.out.println("Estimated average read length: " + avgReadLen);
 	}
 	
 	private void createHashMap() {
@@ -566,6 +566,9 @@ public class GrowScaffolds {
 						+ "\n");
 				bwOutLog.write("Trying to grow scaffold " + scaffoldId + " with length "
 						+ scaffoldLength + "\n");
+				if (scaffoldLength > 300000) {
+                    bwOutLog.write("Length of " + scaffoldId + " is already greater than 300kbp, so stop extending this one.\n");
+                }
 			}
 			br.close();
 			bw.close();
@@ -782,7 +785,10 @@ public class GrowScaffolds {
 		
 		while (extendContig) {
 			int currentLength = getScaffoldFromScaffolds(outputDir);
-			if (currentLength > prevLength)
+			if (currentLength > 300000) {
+                extendContig = false;
+            }
+			else if (currentLength > prevLength)
 			{
 				prevLength = currentLength;
 				createBed(outputDir);
@@ -1294,11 +1300,10 @@ public class GrowScaffolds {
                     + "bowtie2 -x bowtie2-index "
                     + "-U " + read1
                     + " | samtools view -bS - | samtools view -h -F 0x04 -b - | "
-                    + "samtools sort - -o bowtie2-mapped.sam\n"
-                    + "samtools view -bS bowtie2-mapped.sam | samtools sort - -o bowtie2-mapped.bam\n"
+                    + "samtools sort - -o bowtie2-mapped.bam\n"
                     + "samtools depth bowtie2-mapped.bam > samtools-coverage.txt\n"
                     + "bash pileup.sh "
-                    + "in=bowtie2-mapped.sam out=bbmap-coverage.txt\n";
+                    + "in=bowtie2-mapped.bam out=bbmap-coverage.txt\n";
 		    }
 		    else {
         			cmd = "cd " + outputDirName + "/final-results\n"
@@ -1308,11 +1313,10 @@ public class GrowScaffolds {
                     + "-1 " + read1
                     + " -2 " + read2
                     + " | samtools view -bS - | samtools view -h -F 0x04 -b - | "
-                    + "samtools sort - -o bowtie2-mapped.sam\n"
-                    + "samtools view -bS bowtie2-mapped.sam | samtools sort - -o bowtie2-mapped.bam\n"
+                    + "samtools sort - -o bowtie2-mapped.bam\n"
                     + "samtools depth bowtie2-mapped.bam > samtools-coverage.txt\n"
                     + "bash pileup.sh "
-                    + "in=bowtie2-mapped.sam out=bbmap-coverage.txt\n";
+                    + "in=bowtie2-mapped.bam out=bbmap-coverage.txt\n";
 		    }
 			
 			FileWriter shellFileWriter = new FileWriter(outputDirName +

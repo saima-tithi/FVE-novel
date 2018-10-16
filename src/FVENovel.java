@@ -70,7 +70,7 @@ public class FVENovel {
                             if (args[i + 1].equals("true")) {
                                 generateSeeds = true;
                             }
-                            else if (args[i + 1].equals("false")){
+                            else if (args[i + 1].equals("false")) {
                                 generateSeeds = false;
                             }
                             else {
