@@ -41,7 +41,7 @@ export PATH=$PATH:/path-to-project-directory/tools-linux/MUMmer3.23
 # Run FastViromeExplorer-novel
 Download the reference database and kallisto index file by downloading "GOV-viral-populations" folder from http://bench.cs.vt.edu/FastViromeExplorer/. Then download 2 read files containing ocean metagenome from NCBI SRA under the accession number SRR5677466 (https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=SRR5677466). You can download the read files using the following command:
 ```bash
-fastq-dump --skip-technical  --readids --read-filter pass --dumpbase --split-files --clip SRR5677466
+fastq-dump --skip-technical --read-filter pass --dumpbase --split-files --clip SRR5677466
 ```
 Two paired-end read files, SRR5677466_pass_1.fastq and SRR5677466_pass_2.fastq will be downloaded.
 Run FastViromeExplorer using the following commands:
@@ -73,6 +73,6 @@ As FastViromeExplorer-novel is a multi-threaded program and most of the dependan
 The ouput folders and files will be generated in the `FVE-novel-outputDirectory` folder. The outputs will be stored in `final-results` folder inside `FVE-novel-outputDirectory` folder.
 
 The output files are:
-1. *final-scaffolds.fasta* : all scaffolds assembled from the reads, they are draft viral genomes
+1. *final-scaffolds.fasta* : All scaffolds assembled from the reads, they are draft viral genomes.
 2. *bin-info.tsv* : For each scaffold, gives the bin information of that scaffold.
-3. *ANI-info.tsv* : For each scaffold, gives the ANI(Average Nucleotide Identity) of this scaffold with the reference genome (and all other reference genomes present in the same bin) from where this scaffold got assembled.  
+3. *ANI-info.tsv* : For each scaffold, gives the ANI (Average Nucleotide Identity) of this scaffold with the reference genome (and all other reference genomes present in the same bin) from where this scaffold got assembled.

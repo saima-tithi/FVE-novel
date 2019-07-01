@@ -520,7 +520,7 @@ public class GrowScaffolds {
 	}
 	
 	private void createBed(String outputDir) {
-		//move contig.fasta and contig.fasta.fai from spades-res folder to outputDir
+		//move scaffold.fasta and scaffold.fasta.fai from spades-res folder to outputDir
 		File scaffoldFile = new File(outputDir + "/tmp/spades-res/scaffold.fasta");
 		if (scaffoldFile.exists() && !scaffoldFile.isDirectory()) 
 		{
@@ -566,8 +566,8 @@ public class GrowScaffolds {
 						+ "\n");
 				bwOutLog.write("Trying to grow scaffold " + scaffoldId + " with length "
 						+ scaffoldLength + "\n");
-				if (scaffoldLength > 300000) {
-                    bwOutLog.write("Length of " + scaffoldId + " is already greater than 300kbp, so stop extending this one.\n");
+				if (scaffoldLength > 200000) {
+                    bwOutLog.write("Length of " + scaffoldId + " is already greater than 200kbp, so stop extending this one.\n");
                 }
 			}
 			br.close();
@@ -785,7 +785,7 @@ public class GrowScaffolds {
 		
 		while (extendContig) {
 			int currentLength = getScaffoldFromScaffolds(outputDir);
-			if (currentLength > 300000) {
+			if (currentLength > 200000) {
                 extendContig = false;
             }
 			else if (currentLength > prevLength)
@@ -1301,7 +1301,7 @@ public class GrowScaffolds {
                     + "-U " + read1
                     + " | samtools view -bS - | samtools view -h -F 0x04 -b - | "
                     + "samtools sort - -o bowtie2-mapped.bam\n"
-                    + "samtools depth bowtie2-mapped.bam > samtools-coverage.txt\n"
+                    + "samtools depth -a bowtie2-mapped.bam > samtools-coverage.txt\n"
                     + "bash pileup.sh "
                     + "in=bowtie2-mapped.bam out=bbmap-coverage.txt\n";
 		    }
@@ -1314,7 +1314,7 @@ public class GrowScaffolds {
                     + " -2 " + read2
                     + " | samtools view -bS - | samtools view -h -F 0x04 -b - | "
                     + "samtools sort - -o bowtie2-mapped.bam\n"
-                    + "samtools depth bowtie2-mapped.bam > samtools-coverage.txt\n"
+                    + "samtools depth -a bowtie2-mapped.bam > samtools-coverage.txt\n"
                     + "bash pileup.sh "
                     + "in=bowtie2-mapped.bam out=bbmap-coverage.txt\n";
 		    }
