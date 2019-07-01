@@ -12,7 +12,7 @@ FastViromeExplorer requires the following tools installed in the user's machine.
 7. Mummer
 
 ## Install FastViromeExplorer
-Install FastViromeExplorer from here: https://code.vt.edu/saima5/FastViromeExplorer
+Install FastViromeExplorer from here: https://github.com/saima-tithi/FastViromeExplorer
  
 ## Download FastViromeExplorer-novel
 You can download FastViromeExplorer-novel directly from github and extract it. You can also download it using the following command:
