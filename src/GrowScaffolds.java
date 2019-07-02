@@ -44,7 +44,8 @@ public class GrowScaffolds {
 	private double avgReadLen = 0;
 	private int numThreads = 4;
 	private double cdHitCuttOff = 0.95;
-	private String spadesKmerlen = "default";
+	private String spadesKmerlen = "default";	
+	private int maxAssembledScaffLen = 200000;
 	
 	private void setDbFiles() {
 		if (dbType.equals("gov")) {
@@ -566,8 +567,9 @@ public class GrowScaffolds {
 						+ "\n");
 				bwOutLog.write("Trying to grow scaffold " + scaffoldId + " with length "
 						+ scaffoldLength + "\n");
-				if (scaffoldLength > 200000) {
-                    bwOutLog.write("Length of " + scaffoldId + " is already greater than 200kbp, so stop extending this one.\n");
+				if (scaffoldLength > maxAssembledScaffLen) {
+                    bwOutLog.write("Length of " + scaffoldId + " is already greater than " 
+                        + maxAssembledScaffLen + ", so stop extending this one.\n");
                 }
 			}
 			br.close();
@@ -785,7 +787,7 @@ public class GrowScaffolds {
 		
 		while (extendContig) {
 			int currentLength = getScaffoldFromScaffolds(outputDir);
-			if (currentLength > 200000) {
+			if (currentLength > maxAssembledScaffLen) {
                 extendContig = false;
             }
 			else if (currentLength > prevLength)
@@ -1397,7 +1399,7 @@ public class GrowScaffolds {
 	
 	public void initialize(String read1, String read2, String outputDirName, 
 			String FVEResDir, String dbType, String dbDir, int numThreads, int minFoldCov, int minScaffoldLen,
-			int topBins, String spadesKmerLength) {
+			int topBins, String spadesKmerLength, int maxAssembledScaffLen) {
 		
 		this.read1 = read1;
 		this.read2  = read2;
@@ -1410,6 +1412,7 @@ public class GrowScaffolds {
 		this.minScaffoldLen = minScaffoldLen;
 		this.topBins = topBins;
 		this.spadesKmerlen = spadesKmerLength;
+		this.maxAssembledScaffLen = maxAssembledScaffLen;
 		
 		setDbFiles();
 		generateCoverageStatForFVE();

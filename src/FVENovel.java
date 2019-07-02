@@ -16,11 +16,12 @@ public class FVENovel {
 	private static boolean generateSeeds = true;
 	private static int seedExtensionStart = 0;
 	private static boolean onlyStatistics = false;
+	private static int maxAssembledScaffLen = 200000;
 	
 	private static void printUsage() {
 	    System.out.println("Usage:");
         System.out.println(
-                "java -cp bin FVENovel -1 $read1File -2 $read2File -fveres $FastViromeExplorerResDirectory "
+                "java -cp /path-to-FVE-novel/bin FVENovel -1 $read1File -2 $read2File -fveres $FastViromeExplorerResDirectory "
                 + "-dbType gov -dbDir /path-to-referencedb-folder -o $outputDirectory");
         System.out.println("-1: input .fastq file for read sequences (paired-end 1), mandatory field.");
         System.out.println("-2: input .fastq file for read sequences (paired-end 2).");
@@ -66,6 +67,8 @@ public class FVENovel {
                             spadesKmerlen = args[i + 1];
                         } else if (args[i].equals("-seedExtensionStart")) {
                             seedExtensionStart = Integer.parseInt(args[i + 1]);
+                        } else if (args[i].equals("-maxAssembledScaffLen")) {
+                            maxAssembledScaffLen = Integer.parseInt(args[i + 1]);
                         } else if (args[i].equals("-generateSeeds")) {
                             if (args[i + 1].equals("true")) {
                                 generateSeeds = true;
@@ -107,7 +110,7 @@ public class FVENovel {
 		
 		GrowScaffolds growScaffolds = new GrowScaffolds();
 		growScaffolds.initialize(read1, read2, outputDirName, FVEResDir, dbType, dbDir, MYTHREADS, MIN_FOLD_COV,
-				MIN_SCAFFOLD_LEN, TOP_BINS, spadesKmerlen);
+				MIN_SCAFFOLD_LEN, TOP_BINS, spadesKmerlen, maxAssembledScaffLen);
 		if (onlyStatistics) {
 		    growScaffolds.getANIInfo();
 		    growScaffolds.getCoverageInfo();
