@@ -447,76 +447,174 @@ public class GrowScaffolds {
 		}
 	}
 	
-	public int getSeedScaffolds() {
+	public int writeSeedScaffolds() {
+	    int totalBin = clusters.size();
+        if (totalBin == 0) {
+            return 0;
+        }
+        int scaffoldNum = 0;
+        File dir = new File(outputDirName + "/final-results");
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+        BufferedReader br = null;
+        BufferedWriter bw = null;
+        int binsFailedAssembly = 0;
+        
+        for (int i = 0; i < totalBin; i++) 
+        {
+            File file = new File(outputDirName + "/bin-" + i + "/metaSpades-res/cd-hit-scaffolds.fasta.fai");
+            if (file.exists())
+            {
+                try 
+                {
+                    br = new BufferedReader(new FileReader(file));
+                    bw = new BufferedWriter(new FileWriter(outputDirName + "/final-results/binInfo.txt", true));
+                    String str = "";
+                    String[] results;
+                    int length = 0;
+                    while ((str = br.readLine()) != null) 
+                    {
+                        results = str.split("\t");
+                        length = Integer.parseInt(results[1].trim());
+                        if (length >= minScaffoldLen) 
+                        {
+                            String cmd = "cd " + outputDirName + "\n" 
+                                    + "cd final-results\n"
+                                    + "bash filterbyname.sh "
+                                    + "in=../bin-" + i + "/metaSpades-res/cd-hit-scaffolds.fasta "
+                                    + "out=seed-scaffolds.fasta names=" + results[0]
+                                    + " include=t app=t\n";
+                            
+                            FileWriter shellFileWriter = new FileWriter(outputDirName + "/run.sh");
+                            shellFileWriter.write("#!/bin/bash\n");
+                            shellFileWriter.write(cmd);
+                            shellFileWriter.close();
+
+                            ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/run.sh");
+                            builder.redirectError(Redirect.appendTo(new File(outputDirName + "/log.txt")));
+                            Process process = builder.start();
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                            while (reader.readLine() != null) {
+                            }
+                            process.waitFor();
+                            scaffoldNum++;
+                            bw.write("Seed scaffold-" + scaffoldNum + "\tLength: " + length + "\tbin-" + i + "\t" + clusters.get(i) + "\n");
+                        }                       
+                    }
+                    br.close();
+                    bw.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            else {
+                //System.out.println("No assembly for bin: " + i);
+                binsFailedAssembly++;
+            }
+        }
+        //System.out.println("Total bins failed in metaSpades assembly: " + binsFailedAssembly);
+        //System.out.println("Total seed scaffolds: " + scaffoldNum);
+        return scaffoldNum;
+	}
+	
+	public int getSeedScaffolds(String seedScaffDir) {
 		int totalBin = clusters.size();
 		if (totalBin == 0) {
 			return 0;
 		}
 		File dir = new File(outputDirName + "/seed-scaffolds");
-		dir.mkdir();
+		if (!dir.exists()) {
+		    dir.mkdir();
+		}
 		int scaffoldNum = 0;		
 		BufferedReader br = null;
-		BufferedWriter bw = null;
-		int binsFailedAssembly = 0;
 		
-		for (int i = 0; i < totalBin; i++) {
-			File file = new File(outputDirName + "/bin-" + i + "/metaSpades-res/cd-hit-scaffolds.fasta.fai");
-			if (file.exists())
-			{
-				try 
-				{
-					br = new BufferedReader(new FileReader(file));
-					bw = new BufferedWriter(new FileWriter(outputDirName + "/seed-scaffolds/binInfo.txt", true));
-					
-					String str = "";
-					String[] results;
-					int length = 0;
-					while ((str = br.readLine()) != null) 
-					{
-						results = str.split("\t");
-						length = Integer.parseInt(results[1].trim());
-						if (length >= minScaffoldLen) 
-						{
-							String cmd = "cd " + outputDirName + "\n" 
-									+ "cd seed-scaffolds\n"
-									+ "mkdir scaffold-" + scaffoldNum + "\n"
-									+ "bash filterbyname.sh "
-									+ "in=../bin-" + i + "/metaSpades-res/cd-hit-scaffolds.fasta "
-									+ "out=scaffold-" + scaffoldNum + "/scaffold.fasta names=" + results[0]
-									+ " include=t\n"
-									+ "cd scaffold-" + scaffoldNum + "\n"
-									+ "samtools faidx scaffold.fasta\n";
-							
-							FileWriter shellFileWriter = new FileWriter(outputDirName + "/run.sh");
-							shellFileWriter.write("#!/bin/bash\n");
-							shellFileWriter.write(cmd);
-							shellFileWriter.close();
-
-							ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/run.sh");
-							builder.redirectError(Redirect.appendTo(new File(outputDirName + "/log.txt")));
-							Process process = builder.start();
-							BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-							while (reader.readLine() != null) {
-							}
-							process.waitFor();
-							bw.write("scaffold-" + scaffoldNum + "\tLength: " + length + "\tbin-" + i + "\t" + clusters.get(i) + "\n");
-							scaffoldNum++;
-						}						
-					}
-					br.close();
-					bw.close();
-				}
-				catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			else {
-				//System.out.println("No assembly for bin: " + i);
-				binsFailedAssembly++;
-			}
+		String cmd = "";
+		if (!seedScaffDir.equals(outputDirName + "/final-results")) 
+		{
+	        try 
+	        {
+	            cmd = "cd " + outputDirName + "\n"
+	                + "mv " + seedScaffDir + " final-results\n";
+	        
+	            FileWriter shellFileWriter = new FileWriter(outputDirName + "/run.sh");
+	            shellFileWriter.write("#!/bin/bash\n");
+	            shellFileWriter.write(cmd);
+	            shellFileWriter.close();
+	    
+	            ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/run.sh");
+	            builder.redirectError(Redirect.appendTo(new File(outputDirName + "/log.txt")));
+	            Process process = builder.start();
+	            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+	            while (reader.readLine() != null) {
+	            }
+	            process.waitFor();
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
 		}
-		//System.out.println("Total bins failed in metaSpades assembly: " + binsFailedAssembly);
-		//System.out.println("Total seed scaffolds: " + scaffoldNum);
+		
+        try {
+            cmd = "cd " + outputDirName + "/final-results\n"
+                + "samtools faidx seed-scaffolds.fasta\n";
+        
+            FileWriter shellFileWriter = new FileWriter(outputDirName + "/run.sh");
+            shellFileWriter.write("#!/bin/bash\n");
+            shellFileWriter.write(cmd);
+            shellFileWriter.close();
+    
+            ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/run.sh");
+            builder.redirectError(Redirect.appendTo(new File(outputDirName + "/log.txt")));
+            Process process = builder.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            while (reader.readLine() != null) {
+            }
+            process.waitFor();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        File file = new File(outputDirName + "/final-results/seed-scaffolds.fasta.fai");
+        if (file.exists())
+        {
+            try 
+            {
+                br = new BufferedReader(new FileReader(file));
+                String str = "";
+                String[] results;
+                while ((str = br.readLine()) != null) 
+                {
+                    results = str.split("\t");
+                    cmd = "cd " + outputDirName + "\n" 
+                        + "cd seed-scaffolds\n"
+                        + "mkdir scaffold-" + scaffoldNum + "\n"
+                        + "bash filterbyname.sh "
+                        + "in=../final-results/seed-scaffolds.fasta "
+                        + "out=scaffold-" + scaffoldNum + "/scaffold.fasta names=" + results[0]
+                        + " include=t\n"
+                        + "cd scaffold-" + scaffoldNum + "\n"
+                        + "samtools faidx scaffold.fasta\n";
+                
+                    FileWriter shellFileWriter = new FileWriter(outputDirName + "/run.sh");
+                    shellFileWriter.write("#!/bin/bash\n");
+                    shellFileWriter.write(cmd);
+                    shellFileWriter.close();
+    
+                    ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/run.sh");
+                    builder.redirectError(Redirect.appendTo(new File(outputDirName + "/log.txt")));
+                    Process process = builder.start();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    while (reader.readLine() != null) {
+                    }
+                    process.waitFor();
+                    scaffoldNum++;
+                }
+                br.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 		return scaffoldNum;
 	}
 	
@@ -850,7 +948,9 @@ public class GrowScaffolds {
 	private void getAllScaffolds(int totalSeedScaffolds) {		
 		//copy all scaffold fasta to all-scaffolds.fasta
 		File dir = new File(outputDirName + "/final-results");
-		dir.mkdir();
+		if (!dir.exists()) {
+		    dir.mkdir();
+		}
 		
 		for (int i = 0; i < totalSeedScaffolds; i++) 
 		{
@@ -966,12 +1066,37 @@ public class GrowScaffolds {
 		runCdhit();
 	}
 	
-	private void getBinAndANIInfo() {
+	public void getBinAndANIInfo(String finalScaffDir) {
+	    String cmd = "";
+        if (!finalScaffDir.equals(outputDirName + "/final-results")) 
+        {
+            try 
+            {
+                cmd = "cd " + outputDirName + "\n"
+                    + "mv " + finalScaffDir + " final-results\n";
+            
+                FileWriter shellFileWriter = new FileWriter(outputDirName + "/run.sh");
+                shellFileWriter.write("#!/bin/bash\n");
+                shellFileWriter.write(cmd);
+                shellFileWriter.close();
+        
+                ProcessBuilder builder = new ProcessBuilder("sh", outputDirName + "/run.sh");
+                builder.redirectError(Redirect.appendTo(new File(outputDirName + "/log.txt")));
+                Process process = builder.start();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                while (reader.readLine() != null) {
+                }
+                process.waitFor();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+	    
         Map<Integer, Integer> scaffoldToBinMap = new HashMap<Integer, Integer>();
         //get scaffold-bin map
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new FileReader(outputDirName + "/seed-scaffolds/binInfo.txt"));
+            br = new BufferedReader(new FileReader(outputDirName + "/final-results/binInfo.txt"));
             String str = "";
             String[] results;
             while ((str = br.readLine()) != null) 
@@ -992,7 +1117,6 @@ public class GrowScaffolds {
         String fastaHeader = "";
         int sortedScaffoldNum = 0;
         Set<Integer> genomesInBin;
-        String cmd = "";
         String ANIRes = "";
         double refANI = 0;
         double qryANI = 0;
@@ -1193,7 +1317,7 @@ public class GrowScaffolds {
 		//get scaffold-bin map
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(outputDirName + "/seed-scaffolds/binInfo.txt"));
+			br = new BufferedReader(new FileReader(outputDirName + "/final-results/binInfo.txt"));
 			String str = "";
 			String[] results;
 			while ((str = br.readLine()) != null) 
@@ -1386,10 +1510,6 @@ public class GrowScaffolds {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}		
-	}	
-	
-	public void getANIInfo() {
-		getBinAndANIInfo();
 	}
 	
 	public void getCoverageInfo() {
